@@ -1,0 +1,77 @@
+# Local development environment configuration
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+  
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${spring.application.name}-local
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+# Service URLs for local development
+services:
+  user-service:
+    url: http://localhost:8081
+  tweet-service:
+    url: http://localhost:8082
+  file-service:
+    url: http://localhost:8083
+  auth-service:
+    url: http://localhost:8084
+
+# File storage (local filesystem)
+file:
+  storage:
+    type: local
+    base-path: ${user.home}/twitter-files
+    max-size: 10MB
+
+# Security settings (relaxed for development)
+security:
+  jwt:
+    secret: local-development-secret-key-change-in-production
+    expiration: 86400000  # 24 hours
+    refresh-expiration: 604800000  # 7 days
+
+# Logging (debug level for development)
+logging:
+  level:
+    org.userservice: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

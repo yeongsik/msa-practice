@@ -1,0 +1,110 @@
+# Production-like staging environment configuration
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:staging-postgres}:5432/${DB_NAME:twitterdb_staging}
+    username: ${DB_USERNAME:twitter_staging}
+    password: ${DB_PASSWORD}  # Must be provided via environment variable
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 8
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  
+  redis:
+    cluster:
+      nodes: ${REDIS_CLUSTER_NODES}
+    password: ${REDIS_PASSWORD}
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 16
+        max-wait: -1ms
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    producer:
+      retries: 5
+      acks: all
+      batch-size: 16384
+      linger-ms: 5
+      compression-type: gzip
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${spring.application.name}-staging
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+# Service URLs (internal load balancer)
+services:
+  user-service:
+    url: http://staging-user-service-lb:8080
+  tweet-service:
+    url: http://staging-tweet-service-lb:8080
+  file-service:
+    url: http://staging-file-service-lb:8080
+  auth-service:
+    url: http://staging-auth-service-lb:8080
+
+# File storage (AWS S3 compatible)
+file:
+  storage:
+    type: s3
+    endpoint: ${S3_ENDPOINT}
+    access-key: ${S3_ACCESS_KEY}
+    secret-key: ${S3_SECRET_KEY}
+    bucket: twitter-staging
+    region: ${S3_REGION:us-west-2}
+    cloudfront-domain: ${CLOUDFRONT_DOMAIN}
+
+# Security (production-like)
+security:
+  jwt:
+    secret: ${JWT_SECRET}  # Must be provided via secure mechanism
+    expiration: 900000    # 15 minutes
+    refresh-expiration: 604800000  # 7 days
+
+# Logging (structured JSON)
+logging:
+  level:
+    org.userservice: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+  pattern:
+    console: '{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","thread":"%thread","logger":"%logger{36}","message":"%msg","traceId":"%X{traceId:-}","spanId":"%X{spanId:-}"}%n'
+  file:
+    name: /app/logs/${spring.application.name}.log
+    max-size: 200MB
+    max-history: 60
+
+# Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 30s
+  tracing:
+    sampling:
+      probability: 0.1  # 10% sampling for performance

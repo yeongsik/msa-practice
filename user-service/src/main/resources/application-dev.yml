@@ -1,0 +1,97 @@
+# Shared development environment configuration
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:dev-postgres}:5432/${DB_NAME:twitterdb_dev}
+    username: ${DB_USERNAME:twitter_dev}
+    password: ${DB_PASSWORD:dev_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  
+  redis:
+    host: ${REDIS_HOST:dev-redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:dev_redis_password}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:dev-kafka:9092}
+    producer:
+      retries: 3
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${spring.application.name}-dev
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+# Service discovery (for dev environment)
+services:
+  user-service:
+    url: http://dev-user-service:8080
+  tweet-service:
+    url: http://dev-tweet-service:8080
+  file-service:
+    url: http://dev-file-service:8080
+  auth-service:
+    url: http://dev-auth-service:8080
+
+# File storage (MinIO for dev)
+file:
+  storage:
+    type: s3
+    endpoint: http://dev-minio:9000
+    access-key: ${MINIO_ACCESS_KEY:dev_access_key}
+    secret-key: ${MINIO_SECRET_KEY:dev_secret_key}
+    bucket: twitter-dev
+    region: us-east-1
+
+# Security settings
+security:
+  jwt:
+    secret: ${JWT_SECRET:dev-jwt-secret-key-should-be-changed}
+    expiration: 3600000   # 1 hour (shorter for dev testing)
+    refresh-expiration: 86400000  # 24 hours
+
+# Logging (info level)
+logging:
+  level:
+    org.userservice: INFO
+    org.springframework.web: WARN
+  file:
+    name: /app/logs/${spring.application.name}.log
+    max-size: 100MB
+    max-history: 30
+
+# Monitoring and metrics
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,configprops
+  metrics:
+    export:
+      prometheus:
+        enabled: true

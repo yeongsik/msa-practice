@@ -1,0 +1,124 @@
+# Production environment - security focused configuration
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+  
+  redis:
+    cluster:
+      nodes: ${REDIS_CLUSTER_NODES}
+    password: ${REDIS_PASSWORD}
+    timeout: 5000ms
+    lettuce:
+      pool:
+        max-active: 32
+        max-wait: -1ms
+        max-idle: 16
+        min-idle: 8
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    producer:
+      retries: 2147483647  # Maximum retries
+      acks: all
+      batch-size: 32768
+      linger-ms: 10
+      compression-type: gzip
+      max-in-flight-requests-per-connection: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${spring.application.name}-prod
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+# Service URLs (production load balancer)
+services:
+  user-service:
+    url: ${USER_SERVICE_URL}
+  tweet-service:
+    url: ${TWEET_SERVICE_URL}
+  file-service:
+    url: ${FILE_SERVICE_URL}
+  auth-service:
+    url: ${AUTH_SERVICE_URL}
+
+# File storage (AWS S3)
+file:
+  storage:
+    type: s3
+    access-key: ${S3_ACCESS_KEY}
+    secret-key: ${S3_SECRET_KEY}
+    bucket: ${S3_BUCKET}
+    region: ${S3_REGION}
+    cloudfront-domain: ${CLOUDFRONT_DOMAIN}
+
+# Security (maximum security)
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 900000    # 15 minutes
+    refresh-expiration: 604800000  # 7 days
+
+# Logging (structured JSON, minimal)
+logging:
+  level:
+    org.userservice: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.apache.kafka: WARN
+    com.zaxxer.hikari: WARN
+  pattern:
+    console: '{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","service":"${spring.application.name}","traceId":"%X{traceId:-}","spanId":"%X{spanId:-}","userId":"%X{userId:-}","message":"%msg"}%n'
+  file:
+    name: /app/logs/${spring.application.name}.log
+    max-size: 500MB
+    max-history: 90
+
+# Monitoring (production-ready)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 60s
+  tracing:
+    sampling:
+      probability: 0.01  # 1% sampling for production
