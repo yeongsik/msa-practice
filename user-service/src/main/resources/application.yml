@@ -30,6 +30,13 @@ logging:
     root: INFO
     org.userservice: ${LOG_LEVEL:DEBUG}
 
+# JWT Security Configuration
+security:
+  jwt:
+    secret: ${JWT_SECRET:dGVzdC1qd3Qtc2VjcmV0LWtleS1mb3ItdXNlci1zZXJ2aWNlLW11c3QtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9u}
+    expiration: ${JWT_EXPIRATION:900000}  # 15 minutes in milliseconds
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in milliseconds
+
 # Actuator endpoints
 management:
   endpoints:

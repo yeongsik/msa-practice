@@ -3,7 +3,9 @@ package org.userservice.presentation.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,6 +29,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
         log.error("Business error occurred: {} - {}", e.getErrorCode().getCode(), e.getMessage());
         
+        // 인증 관련 에러는 401 상태코드 사용
+        if (e.getErrorCode().getCode().startsWith("AUTH")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(e.getErrorCode().getCode(), e.getUserMessage()));
+        }
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(e.getErrorCode().getCode(), e.getUserMessage()));
     }
@@ -47,6 +55,28 @@ public class GlobalExceptionHandler {
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error("VALIDATION_ERROR", "입력값이 올바르지 않습니다."));
+    }
+
+    /**
+     * Handle JSON parsing exceptions
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.error("JSON parsing error occurred: {}", e.getMessage());
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("JSON_PARSE_ERROR", "잘못된 JSON 형식입니다."));
+    }
+
+    /**
+     * Handle unsupported media type exceptions
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
+        log.error("Unsupported media type error occurred: {}", e.getMessage());
+        
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ApiResponse.error("UNSUPPORTED_MEDIA_TYPE", "지원하지 않는 Content-Type입니다."));
     }
 
     /**

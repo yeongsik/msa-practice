@@ -6,8 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.userservice.application.dto.LoginRequest;
+import org.userservice.application.dto.LoginResponse;
 import org.userservice.application.dto.UserCreateRequest;
 import org.userservice.application.dto.UserResponse;
+import org.userservice.application.usecase.AuthService;
 import org.userservice.application.usecase.UserService;
 import org.userservice.common.ApiResponse;
 
@@ -21,6 +24,7 @@ import org.userservice.common.ApiResponse;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     /**
      * User registration endpoint
@@ -38,6 +42,23 @@ public class UserController {
         
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response));
+    }
+    
+    /**
+     * User login endpoint
+     * 
+     * @param loginRequest login request
+     * @return login response with tokens
+     */
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
+        log.info("User login request received for loginId: {}", loginRequest.loginId());
+        
+        LoginResponse response = authService.login(loginRequest);
+        
+        log.info("User login completed for userId: {}", response.userId());
+        
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
