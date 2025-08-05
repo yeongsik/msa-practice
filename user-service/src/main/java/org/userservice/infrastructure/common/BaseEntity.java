@@ -1,4 +1,4 @@
-package org.userservice.common;
+package org.userservice.infrastructure.common;
 
 import jakarta.persistence.*;
 import lombok.Getter;

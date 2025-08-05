@@ -1,4 +1,4 @@
-package org.userservice.common;
+package org.userservice.infrastructure.common;
 
 /**
  * Snowflake ID Generator for distributed unique ID generation
