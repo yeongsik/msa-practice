@@ -1,8 +1,5 @@
 package org.userservice.infrastructure.persistence.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.userservice.domain.model.Email;
 import org.userservice.domain.model.User;
@@ -16,12 +13,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class JpaUserRepository implements UserRepository {
+public class UserRepositoryImpl implements UserRepository {
 
-    private final SpringDataUserRepository springDataUserRepository;
+    private final UserJpaRepository springDataUserRepository;
     private final UserMapper userMapper;
 
-    public JpaUserRepository(SpringDataUserRepository springDataUserRepository, UserMapper userMapper) {
+    public UserRepositoryImpl(UserJpaRepository springDataUserRepository, UserMapper userMapper) {
         this.springDataUserRepository = springDataUserRepository;
         this.userMapper = userMapper;
     }

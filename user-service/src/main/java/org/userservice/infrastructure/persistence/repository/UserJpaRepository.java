@@ -10,7 +10,7 @@ import org.userservice.infrastructure.persistence.entity.UserJpaEntity;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, Long> {
+public interface UserJpaRepository extends JpaRepository<UserJpaEntity, Long> {
 
     Optional<UserJpaEntity> findByUsernameAndDeletedFalse(String username);
     Optional<UserJpaEntity> findByEmailAndDeletedFalse(String email);

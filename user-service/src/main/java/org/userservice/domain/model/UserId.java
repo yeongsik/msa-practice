@@ -1,6 +1,7 @@
 package org.userservice.domain.model;
 
 import java.util.Objects;
+import org.userservice.infrastructure.common.SnowflakeIdGenerator;
 
 /**
  * 사용자 ID Value Object
@@ -24,11 +25,11 @@ public record UserId(Long value) {
     }
     
     /**
-     * 새로운 사용자 ID 생성 (추후 SnowflakeIdGenerator 구현 시 사용)
+     * Snowflake 알고리즘을 사용한 새로운 사용자 ID 생성
+     * 분산 환경에서 고유성을 보장하는 64bit ID 생성
      */
     public static UserId generate() {
-        // 현재는 간단한 구현, 추후 SnowflakeIdGenerator로 대체
-        return new UserId(System.currentTimeMillis() * 1000 + Math.round(Math.random() * 999));
+        return new UserId(SnowflakeIdGenerator.generate());
     }
     
     /**
