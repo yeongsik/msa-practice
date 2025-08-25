@@ -1,6 +1,7 @@
 package org.userservice.domain.service;
 
 import org.springframework.stereotype.Service;
+import org.userservice.domain.model.Email;
 import org.userservice.domain.model.Password;
 import org.userservice.domain.model.Username;
 import org.userservice.domain.repository.UserRepository;
@@ -15,8 +16,8 @@ public class UserValidationService {
     }
 
     public void validateForCreation(Username username, Email email, Password password) {
-        validateUsernameUniqueness(username);
-        validateEmailUniqueness(email);
-        validatePasswordPolicy(password);
+//        validateUsernameUniqueness(username);
+//        validateEmailUniqueness(email);
+//        validatePasswordPolicy(password);
     }
 }

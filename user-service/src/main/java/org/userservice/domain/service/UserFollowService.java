@@ -1,19 +1,23 @@
 package org.userservice.domain.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.userservice.domain.event.FollowCreatedEvent;
+import org.userservice.domain.event.FollowRemovedEvent;
 import org.userservice.domain.model.Follow;
 import org.userservice.domain.model.User;
 import org.userservice.domain.model.UserId;
 import org.userservice.domain.repository.FollowRepository;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserFollowService {
 
     private final FollowRepository followRepository;
-    
-    public UserFollowService(FollowRepository followRepository) {
-        this.followRepository = followRepository;
-    }
+    private final ApplicationEventPublisher eventPublisher;
 
 
     /**
@@ -22,13 +26,19 @@ public class UserFollowService {
      * @param following 팔로우 대상 사용자
      * @return 생성된 팔로우 관계
      */
+    @Transactional
     public Follow createFollow(User follower, User following) {
         // 도메인 규칙 검증
         validateFollowRules(follower, following);
         
         // 팔로우 관계 생성 및 저장
         Follow follow = Follow.create(follower.getUserId(), following.getUserId());
-        return followRepository.save(follow);
+        Follow save = followRepository.save(follow);
+
+        // 팔로우 알림
+        eventPublisher.publishEvent(new FollowCreatedEvent(this, follower.getUserId(), following.getUserId()));
+
+        return save;
     }
 
     /**
@@ -66,11 +76,15 @@ public class UserFollowService {
     /**
      * 팔로우 관계 해제
      */
+    @Transactional
     public void unfollow(User follower, User following) {
         followRepository.findByFollowerAndFollowing(follower.getUserId(), following.getUserId())
                 .ifPresent(follow -> {
                     follow.unfollow();
                     followRepository.save(follow);
+
+                    // 언팔로우 이벤트 발행
+                    eventPublisher.publishEvent(new FollowRemovedEvent(this, follower.getUserId(), following.getUserId()));
                 });
     }
     
