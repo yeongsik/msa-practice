@@ -1,70 +1,136 @@
-# Getting Started with Create React App
+# X Clone Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+MSA 기반 X(구 Twitter) 클론 프로젝트의 프론트엔드 애플리케이션입니다.
 
-## Available Scripts
+## 🚀 주요 기능
 
-In the project directory, you can run:
+### 📱 반응형 UI/UX
+- **완전한 반응형 디자인**: 모바일, 태블릿, 데스크톱 최적화
+- **다크모드 지원**: 시스템 테마 감지 및 수동 토글
+- **모바일 햄버거 메뉴**: 작은 화면에서의 직관적인 네비게이션
 
-### `npm start`
+### 🔐 인증 시스템
+- 로그인/회원가입 페이지
+- 소셜 로그인 UI (Google, Facebook)
+- 비밀번호 표시/숨기기 기능
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 🏠 메인 피드
+- **무한스크롤**: 트윗을 자동으로 로드
+- **실시간 인터랙션**: 좋아요, 리트윗, 댓글 기능
+- **이미지 지원**: 트윗에 이미지 첨부 가능
+- **트윗 작성 모달**: 어디서든 빠른 트윗 작성
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 👤 사용자 프로필
+- 개인 프로필 페이지
+- 사용자별 트윗 피드 (무한스크롤)
+- 팔로워/팔로잉 정보
+- 프로필 탭 네비게이션 (트윗, 답글, 미디어, 좋아요)
 
-### `npm test`
+### 🔍 부가 기능
+- **검색 페이지**: 트윗 및 사용자 검색
+- **알림 페이지**: 좋아요, 리트윗, 팔로우 알림
+- **메시지**: 실시간 채팅 UI
+- **팔로우 추천**: 사용자 발견 기능
+- **트렌드**: 인기 해시태그 표시
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 🎯 UX 개선사항
+- 클릭 가능한 프로필 네비게이션
+- 부드러운 애니메이션 및 트랜지션
+- 로딩 상태 표시
+- 직관적인 아이콘과 버튼 배치
 
-### `npm run build`
+## 🛠 기술 스택
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **Frontend Framework**: React 19.1.1
+- **Routing**: React Router DOM 7.8.2
+- **Styling**: Tailwind CSS 3.4.17
+- **Icons**: React Icons 5.5.0
+- **Build Tool**: Create React App
+- **State Management**: React Context API
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📦 설치 및 실행
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 사전 요구사항
+- Node.js 18.19.1 이상
+- npm 9.2.0 이상
 
-### `npm run eject`
+### 개발 환경 실행
+```bash
+# 의존성 설치
+npm install
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# 개발 서버 시작
+npm start
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+개발 서버가 실행되면 [http://localhost:3000](http://localhost:3000)에서 확인할 수 있습니다.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### 빌드
+```bash
+# 프로덕션 빌드
+npm run build
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# 테스트 실행
+npm test
+```
 
-## Learn More
+## 📁 프로젝트 구조
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+src/
+├── components/           # 재사용 가능한 컴포넌트
+│   ├── common/          # 공통 컴포넌트 (Button, Avatar, Icon 등)
+│   ├── layout/          # 레이아웃 컴포넌트 (Header, Sidebar 등)
+│   └── tweet/           # 트윗 관련 컴포넌트
+├── context/             # React Context (테마 등)
+├── hooks/               # 커스텀 훅 (무한스크롤 등)
+├── pages/               # 페이지 컴포넌트
+├── utils/               # 유틸리티 함수 및 목업 데이터
+└── App.js              # 메인 앱 컴포넌트
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🎨 디자인 시스템
 
-### Code Splitting
+### 컬러 팔레트
+- **Primary**: Blue-500 (#3B82F6)
+- **Background**: Gray-100/Gray-900 (라이트/다크)
+- **Text**: Gray-900/Gray-100 (라이트/다크)
+- **Accent Colors**: Red-500 (좋아요), Green-500 (리트윗)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 반응형 브레이크포인트
+- **Mobile**: < 640px
+- **Tablet**: 640px - 1024px  
+- **Desktop**: > 1024px
 
-### Analyzing the Bundle Size
+## 🔧 주요 개발 결정사항
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 상태 관리
+- React Context API를 사용한 글로벌 상태 (테마)
+- 로컬 상태는 useState 훅 활용
 
-### Making a Progressive Web App
+### 라우팅 구조
+- 인증 페이지는 독립적인 풀스크린 레이아웃
+- 메인 애플리케이션은 사이드바가 포함된 레이아웃
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 무한스크롤 구현
+- Intersection Observer API 활용
+- 커스텀 훅으로 재사용성 증대
+- 페이지네이션 기반 데이터 로딩
 
-### Advanced Configuration
+### 모바일 최적화
+- 햄버거 메뉴를 통한 네비게이션
+- 터치 친화적인 버튼 크기
+- 콘텐츠 우선 레이아웃
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🚧 향후 계획
 
-### Deployment
+- [ ] 실제 백엔드 API 연동
+- [ ] WebSocket 기반 실시간 기능
+- [ ] 이미지 업로드 기능
+- [ ] 알림 푸시 기능
+- [ ] 검색 자동완성
+- [ ] 무한스크롤 성능 최적화
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 📄 라이선스
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+이 프로젝트는 학습 목적으로 제작되었습니다.
