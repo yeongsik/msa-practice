@@ -1,11 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import Tweet from './Tweet';
+import TweetDetailModal from './TweetDetailModal';
 import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import { generateMockTweets, generateUserSpecificTweets, simulateApiDelay } from '../../utils/mockData';
 
 function TweetList({ userId = null }) {
   const [tweets, setTweets] = useState([]);
   const [page, setPage] = useState(1);
+  const [selectedTweet, setSelectedTweet] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const TWEETS_PER_PAGE = 10;
 
   const fetchMoreTweets = useCallback(async () => {
@@ -36,6 +39,16 @@ function TweetList({ userId = null }) {
     loadInitialTweets();
   }, [userId]);
 
+  const handleTweetClick = (tweetData) => {
+    setSelectedTweet(tweetData);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTweet(null);
+  };
+
   return (
     <div className="divide-y divide-gray-200 dark:divide-gray-700">
       {tweets.map((tweet, index) => (
@@ -50,12 +63,14 @@ function TweetList({ userId = null }) {
           time={tweet.time}
           content={tweet.text}
           imageUrl={tweet.imageUrl}
+          images={tweet.images}
           replies={tweet.replies}
           retweets={tweet.retweets}
           likes={tweet.likes}
           views={tweet.views}
           isLiked={tweet.isLiked}
           isRetweeted={tweet.isRetweeted}
+          onTweetClick={handleTweetClick}
         />
       ))}
       
@@ -73,6 +88,13 @@ function TweetList({ userId = null }) {
           더 이상 불러올 트윗이 없습니다.
         </div>
       )}
+      
+      {/* 트윗 상세 모달 */}
+      <TweetDetailModal 
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        tweet={selectedTweet}
+      />
     </div>
   );
 }

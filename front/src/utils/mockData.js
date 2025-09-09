@@ -59,6 +59,20 @@ const getRandomStats = () => ({
   views: Math.floor(Math.random() * 1000) + 100
 });
 
+const getRandomImages = () => {
+  const shouldHaveImages = Math.random() > 0.7; // 30% 확률로 이미지 있음
+  if (!shouldHaveImages) return [];
+  
+  const imageCount = Math.floor(Math.random() * 10) + 1; // 1~10장
+  const images = [];
+  
+  for (let i = 0; i < imageCount; i++) {
+    images.push(`https://picsum.photos/500/300?random=${Date.now()}_${i}`);
+  }
+  
+  return images;
+};
+
 let tweetIdCounter = 1;
 
 export const generateMockTweets = (count = 10, specificUser = null) => {
@@ -69,6 +83,8 @@ export const generateMockTweets = (count = 10, specificUser = null) => {
     const text = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
     const stats = getRandomStats();
     
+    const images = getRandomImages();
+    
     tweets.push({
       id: tweetIdCounter++,
       user,
@@ -77,8 +93,8 @@ export const generateMockTweets = (count = 10, specificUser = null) => {
       ...stats,
       isLiked: Math.random() > 0.7,
       isRetweeted: Math.random() > 0.9,
-      hasImage: Math.random() > 0.8,
-      imageUrl: Math.random() > 0.8 ? `https://picsum.photos/500/300?random=${tweetIdCounter}` : null
+      images: images,
+      imageUrl: images.length > 0 ? images[0] : null // 호환성을 위해 첫 번째 이미지 유지
     });
   }
   

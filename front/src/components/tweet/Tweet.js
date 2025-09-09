@@ -2,6 +2,7 @@ import { forwardRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../common/Avatar';
 import Button from '../common/Button';
+import ImageGallery from './ImageGallery';
 import { BiMessageRounded } from 'react-icons/bi';
 import { AiOutlineRetweet } from 'react-icons/ai';
 import { FiHeart, FiEye } from 'react-icons/fi';
@@ -17,12 +18,14 @@ const Tweet = forwardRef(({
   time, 
   content, 
   imageUrl,
+  images = [],
   replies, 
   retweets, 
   likes, 
   views,
   isLiked: initialIsLiked = false,
-  isRetweeted: initialIsRetweeted = false
+  isRetweeted: initialIsRetweeted = false,
+  onTweetClick
 }, ref) => {
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [isRetweeted, setIsRetweeted] = useState(initialIsRetweeted);
@@ -57,8 +60,39 @@ const Tweet = forwardRef(({
     return num.toString();
   };
 
+  const handleTweetClick = () => {
+    if (onTweetClick) {
+      onTweetClick({
+        id,
+        userId,
+        username,
+        handle,
+        avatar,
+        time,
+        content,
+        imageUrl,
+        images,
+        replies,
+        retweets: retweetCount,
+        likes: likeCount,
+        views,
+        isLiked,
+        isRetweeted
+      });
+    }
+  };
+
+  // 트윗 내용 길이 제한 (홈 피드에서)
+  const MAX_PREVIEW_LENGTH = 200;
+  const shouldTruncate = content && content.length > MAX_PREVIEW_LENGTH;
+  const previewContent = shouldTruncate ? content.slice(0, MAX_PREVIEW_LENGTH) + '...' : content;
+
   return (
-    <div ref={ref} className="p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
+    <div 
+      ref={ref} 
+      className="p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+      onClick={handleTweetClick}
+    >
       <div className="flex space-x-3">
         <div onClick={handleProfileClick}>
           <Avatar src={avatar} alt={username} className="cursor-pointer hover:opacity-90 transition-opacity" />
@@ -81,19 +115,25 @@ const Tweet = forwardRef(({
             <span className="text-gray-500 dark:text-gray-400">{time}</span>
           </div>
           
-          <p className="mt-2 text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-            {content}
-          </p>
+          <div className="mt-2">
+            <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+              {previewContent}
+            </p>
+            {shouldTruncate && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTweetClick();
+                }}
+                className="text-blue-500 hover:text-blue-600 text-sm font-medium mt-1"
+              >
+                더보기
+              </button>
+            )}
+          </div>
           
-          {imageUrl && (
-            <div className="mt-3">
-              <img 
-                src={imageUrl} 
-                alt="Tweet image" 
-                className="rounded-2xl max-w-full h-auto border border-gray-200 dark:border-gray-600"
-              />
-            </div>
-          )}
+          {/* 이미지 갤러리 */}
+          <ImageGallery images={images} />
           
           <div className="flex justify-between max-w-full sm:max-w-md mt-3 text-sm">
             <Button 
