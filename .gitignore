@@ -35,3 +35,13 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker ###
+# 환경변수 파일들 (실제 비밀번호 포함)
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# .env.example은 제외 (템플릿이므로 커밋함)
