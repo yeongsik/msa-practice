@@ -1,0 +1,106 @@
+# ===================================
+# GitHub Actions CI 워크플로우
+# ===================================
+# 이 파일은 코드를 Push할 때마다 자동으로 실행됩니다.
+# 목적: 빌드 및 테스트를 자동화하여 코드 품질 유지
+
+name: CI - Build and Test
+
+# 워크플로우가 언제 실행될지 정의
+on:
+  # master 브랜치에 Push될 때
+  push:
+    branches: [ master, main ]
+
+  # Pull Request가 생성되거나 업데이트될 때
+  pull_request:
+    branches: [ master, main ]
+
+  # 수동으로 실행 가능 (GitHub Actions 탭에서)
+  workflow_dispatch:
+
+# 환경변수 정의 (모든 job에서 사용 가능)
+env:
+  JAVA_VERSION: '17'
+  GRADLE_VERSION: 'wrapper'
+
+# 실행할 작업들 정의
+jobs:
+  # Job 1: 빌드 및 테스트
+  build-and-test:
+    name: Build and Test
+
+    # 실행 환경 (GitHub 제공 가상머신)
+    runs-on: ubuntu-latest
+
+    # 실행 단계들
+    steps:
+      # Step 1: 코드 체크아웃 (GitHub에서 코드 가져오기)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Java 17 설치
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'  # Eclipse Temurin (AdoptOpenJDK)
+          cache: 'gradle'  # Gradle 의존성 캐싱 (빌드 속도 향상)
+
+      # Step 3: Gradle 실행 권한 부여
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Step 4: Gradle 빌드 (컴파일)
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
+        # --no-daemon: CI 환경에서는 Gradle 데몬 사용 안 함
+
+      # Step 5: 테스트 실행
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+      # Step 6: 테스트 결과 업로드 (실패 시에도 확인 가능)
+      - name: Upload test results
+        if: always()  # 테스트 실패해도 실행
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/build/test-results/**
+            **/build/reports/**
+
+      # Step 7: 테스트 커버리지 리포트 (선택사항)
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Job 2: 코드 품질 체크 (선택사항)
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Checkstyle (코드 스타일 검사)
+      - name: Run Checkstyle
+        run: ./gradlew checkstyleMain checkstyleTest --no-daemon
+        continue-on-error: true  # 실패해도 워크플로우 계속 진행
+
+      # SpotBugs (버그 찾기)
+      # - name: Run SpotBugs
+      #   run: ./gradlew spotbugsMain --no-daemon
+      #   continue-on-error: true

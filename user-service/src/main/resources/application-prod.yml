@@ -1,0 +1,16 @@
+# 프로덕션 환경 설정
+spring:
+  datasource:
+    url: ${DB_URL}  # 환경변수에서 가져오기
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # 프로덕션에서는 validate (변경 금지)
+    show-sql: false  # 프로덕션에서는 SQL 로그 끄기
+
+logging:
+  level:
+    org.hibernate.SQL: WARN
+    com.userservice: INFO
