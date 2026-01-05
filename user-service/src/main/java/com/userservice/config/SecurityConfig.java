@@ -1,6 +1,6 @@
 package com.userservice.config;
 
-import com.userservice.security.JwtAuthenticationFilter;
+import com.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -36,12 +39,13 @@ public class SecurityConfig {
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/signup", "/api/users/login").permitAll() // 회원가입, 로그인은 모두 허용
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/{id}").permitAll() // 사용자 정보 조회 허용 (내부 통신용)
                         .requestMatchers("/actuator/**").permitAll() // 헬스체크 등
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 
                 // JWT 필터 추가 (UsernamePasswordAuthenticationFilter 앞에 실행)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

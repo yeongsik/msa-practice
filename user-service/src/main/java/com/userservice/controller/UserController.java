@@ -8,7 +8,6 @@ import com.userservice.dto.SignUpRequest;
 import com.userservice.dto.UpdateUserRequest;
 import com.userservice.dto.UpdateUserResponse;
 import com.userservice.dto.UserResponse;
-import com.userservice.security.CustomUserDetails;
 import com.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,13 +64,26 @@ public class UserController {
      * 내 정보 조회 API
      * 헤더의 JWT 토큰을 통해 사용자 인증을 수행합니다.
      *
-     * @param userDetails 인증된 사용자 정보 (@AuthenticationPrincipal)
+     * @param userId 인증된 사용자 ID (@AuthenticationPrincipal)
      * @return ApiResponse<MyInfoResponse>
      */
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<MyInfoResponse>> getMyInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        log.info("GET /api/users/me - 내 정보 조회 요청: userId={}", userDetails.getId());
-        MyInfoResponse response = userService.getMyInfo(userDetails.getId());
+    public ResponseEntity<ApiResponse<MyInfoResponse>> getMyInfo(@AuthenticationPrincipal Long userId) {
+        log.info("GET /api/users/me - 내 정보 조회 요청: userId={}", userId);
+        MyInfoResponse response = userService.getMyInfo(userId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * 사용자 정보 조회 API (내부 통신용)
+     *
+     * @param id 사용자 ID
+     * @return ApiResponse<UserResponse>
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable Long id) {
+        log.info("GET /api/users/{} - 사용자 정보 조회 요청", id);
+        UserResponse response = userService.getUser(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -80,20 +92,20 @@ public class UserController {
      *
      * @param id          사용자 ID (Path Variable)
      * @param request     수정 요청 정보
-     * @param userDetails 인증된 사용자 정보
+     * @param userId      인증된 사용자 ID
      * @return ApiResponse<UpdateUserResponse>
      */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UpdateUserResponse>> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Long userId
     ) {
         log.info("PUT /api/users/{} - 정보 수정 요청", id);
 
         // 본인 확인
-        if (!userDetails.getId().equals(id)) {
-            log.warn("권한 없음: 본인의 정보만 수정할 수 있습니다. 요청자={}, 대상={}", userDetails.getId(), id);
+        if (!userId.equals(id)) {
+            log.warn("권한 없음: 본인의 정보만 수정할 수 있습니다. 요청자={}, 대상={}", userId, id);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error("본인의 정보만 수정할 수 있습니다."));
         }

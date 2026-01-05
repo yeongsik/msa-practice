@@ -2,13 +2,17 @@ package com.userservice.service;
 
 import com.userservice.dto.LoginRequest;
 import com.userservice.dto.LoginResponse;
+import com.userservice.dto.MyInfoResponse;
 import com.userservice.dto.SignUpRequest;
+import com.userservice.dto.UpdateUserRequest;
+import com.userservice.dto.UpdateUserResponse;
 import com.userservice.dto.UserResponse;
 import com.userservice.entity.User;
 import com.userservice.exception.DuplicateEmailException;
 import com.userservice.exception.DuplicateUsernameException;
 import com.userservice.exception.InvalidCredentialsException;
 import com.userservice.repository.UserRepository;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -187,5 +191,179 @@ class UserServiceTest {
 
         // then
         verify(passwordEncoder).encode("password123");
+    }
+
+    @Test
+    @DisplayName("내 정보 조회 성공")
+    void getMyInfo_Success() {
+        // given
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+        // when
+        MyInfoResponse response = userService.getMyInfo(1L);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(1L);
+        assertThat(response.getUsername()).isEqualTo("testuser");
+        assertThat(response.getEmail()).isEqualTo("test@example.com");
+
+        verify(userRepository).findById(1L);
+    }
+
+    @Test
+    @DisplayName("내 정보 조회 실패 - 사용자 없음")
+    void getMyInfo_Fail_UserNotFound() {
+        // given
+        given(userRepository.findById(999L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.getMyInfo(999L))
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessageContaining("사용자를 찾을 수 없습니다");
+
+        verify(userRepository).findById(999L);
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 성공 - 이메일만 변경")
+    void updateUser_Success_EmailOnly() {
+        // given
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .currentPassword("password123")
+                .newEmail("newemail@example.com")
+                .build();
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("password123", "encodedPassword")).willReturn(true);
+        given(userRepository.existsByEmail("newemail@example.com")).willReturn(false);
+
+        // when
+        UpdateUserResponse response = userService.updateUser(1L, request);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getEmail()).isEqualTo("newemail@example.com");
+
+        verify(userRepository).findById(1L);
+        verify(passwordEncoder).matches("password123", "encodedPassword");
+        verify(userRepository).existsByEmail("newemail@example.com");
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 성공 - 비밀번호만 변경")
+    void updateUser_Success_PasswordOnly() {
+        // given
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .currentPassword("password123")
+                .newPassword("newPassword456")
+                .build();
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("password123", "encodedPassword")).willReturn(true);
+        given(passwordEncoder.encode("newPassword456")).willReturn("newEncodedPassword");
+
+        // when
+        UpdateUserResponse response = userService.updateUser(1L, request);
+
+        // then
+        assertThat(response).isNotNull();
+
+        verify(userRepository).findById(1L);
+        verify(passwordEncoder).matches("password123", "encodedPassword");
+        verify(passwordEncoder).encode("newPassword456");
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 성공 - 이메일과 비밀번호 모두 변경")
+    void updateUser_Success_EmailAndPassword() {
+        // given
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .currentPassword("password123")
+                .newEmail("newemail@example.com")
+                .newPassword("newPassword456")
+                .build();
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("password123", "encodedPassword")).willReturn(true);
+        given(userRepository.existsByEmail("newemail@example.com")).willReturn(false);
+        given(passwordEncoder.encode("newPassword456")).willReturn("newEncodedPassword");
+
+        // when
+        UpdateUserResponse response = userService.updateUser(1L, request);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getEmail()).isEqualTo("newemail@example.com");
+
+        verify(userRepository).findById(1L);
+        verify(passwordEncoder).matches("password123", "encodedPassword");
+        verify(userRepository).existsByEmail("newemail@example.com");
+        verify(passwordEncoder).encode("newPassword456");
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 실패 - 현재 비밀번호 불일치")
+    void updateUser_Fail_InvalidCurrentPassword() {
+        // given
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .currentPassword("wrongPassword")
+                .newEmail("newemail@example.com")
+                .build();
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("wrongPassword", "encodedPassword")).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> userService.updateUser(1L, request))
+                .isInstanceOf(InvalidCredentialsException.class)
+                .hasMessageContaining("현재 비밀번호가 일치하지 않습니다");
+
+        verify(userRepository).findById(1L);
+        verify(passwordEncoder).matches("wrongPassword", "encodedPassword");
+        verify(userRepository, never()).existsByEmail(anyString());
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 실패 - 이메일 중복")
+    void updateUser_Fail_DuplicateEmail() {
+        // given
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .currentPassword("password123")
+                .newEmail("duplicate@example.com")
+                .build();
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("password123", "encodedPassword")).willReturn(true);
+        given(userRepository.existsByEmail("duplicate@example.com")).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> userService.updateUser(1L, request))
+                .isInstanceOf(DuplicateEmailException.class);
+
+        verify(userRepository).findById(1L);
+        verify(passwordEncoder).matches("password123", "encodedPassword");
+        verify(userRepository).existsByEmail("duplicate@example.com");
+    }
+
+    @Test
+    @DisplayName("사용자 정보 수정 실패 - 사용자 없음")
+    void updateUser_Fail_UserNotFound() {
+        // given
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .currentPassword("password123")
+                .newEmail("newemail@example.com")
+                .build();
+
+        given(userRepository.findById(999L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.updateUser(999L, request))
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessageContaining("사용자를 찾을 수 없습니다");
+
+        verify(userRepository).findById(999L);
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+        verify(userRepository, never()).existsByEmail(anyString());
     }
 }

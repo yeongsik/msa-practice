@@ -21,15 +21,17 @@ public class BoardResponse {
     private String title;
     private String content;
     private Long userId;
+    private String username;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static BoardResponse from(Board board) {
+    public static BoardResponse from(Board board, String username) {
         return BoardResponse.builder()
                 .id(board.getId())
                 .title(board.getTitle())
                 .content(board.getContent())
                 .userId(board.getUserId())
+                .username(username)
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
                 .build();
