@@ -1,0 +1,45 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: LoggingFilter
+          args:
+            baseMessage: Spring Cloud Gateway Global Filter
+            preLogger: true
+            postLogger: true
+      routes:
+        # User Service Route (인증 불필요: 회원가입, 로그인)
+        - id: user-service-public
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/users/signup, /api/users/login
+            - Method=POST
+
+        # User Service Route (인증 필요: 나머지)
+        - id: user-service-auth
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - AuthorizationHeaderFilter
+
+        # Board Service Route (인증 필요)
+        - id: board-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/boards/**
+          filters:
+            - AuthorizationHeaderFilter
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.http.server.reactive: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG

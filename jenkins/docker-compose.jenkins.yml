@@ -1,0 +1,59 @@
+# ===================================
+# Jenkins 서버 Docker Compose 설정
+# ===================================
+# Jenkins를 Docker 컨테이너로 실행
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins
+    privileged: true
+    user: root
+
+    ports:
+      # Jenkins UI
+      - "8080:8080"
+      # Jenkins Agent 연결
+      - "50000:50000"
+
+    volumes:
+      # Jenkins 데이터 영속성
+      - jenkins-data:/var/jenkins_home
+
+      # Docker 소켓 마운트 (Jenkins에서 Docker 사용)
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Gradle 캐시
+      - gradle-cache:/root/.gradle
+
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - JENKINS_OPTS=--prefix=/jenkins
+
+    restart: unless-stopped
+
+    networks:
+      - jenkins-network
+
+  # Jenkins Agent (선택사항)
+  jenkins-agent:
+    image: jenkins/inbound-agent:latest
+    container_name: jenkins-agent
+    environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_AGENT_NAME=agent-1
+      - JENKINS_SECRET=your-agent-secret-here
+    depends_on:
+      - jenkins
+    networks:
+      - jenkins-network
+
+volumes:
+  jenkins-data:
+    driver: local
+  gradle-cache:
+    driver: local
+
+networks:
+  jenkins-network:
+    driver: bridge
