@@ -1,0 +1,60 @@
+package com.boardservice.config;
+
+import com.common.util.JwtUtil;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.Collections;
+
+/**
+ * JWT 인증 필터 (Common 모듈의 JwtUtil 사용)
+ * User Service와 달리 DB 조회를 하지 않고 토큰의 userId만 추출하여 인증 객체 생성
+ */
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+
+        try {
+            String jwt = getJwtFromRequest(request);
+
+            if (StringUtils.hasText(jwt) && JwtUtil.validate(jwt)) {
+                Long userId = JwtUtil.getUserId(jwt);
+
+                // Board Service에서는 User 엔티티를 직접 조회할 수 없으므로(DB가 다름)
+                // 최소한의 정보(userId)만 가진 Principal을 생성하거나,
+                // userId를 Principal로 바로 사용
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userId, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+                
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (Exception ex) {
+            logger.error("Could not set user authentication in security context", ex);
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private String getJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+}
