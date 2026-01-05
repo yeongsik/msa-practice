@@ -1,11 +1,13 @@
 package com.boardservice.service;
 
+import com.boardservice.client.UserServiceClient;
 import com.boardservice.dto.BoardResponse;
 import com.boardservice.dto.CreateBoardRequest;
 import com.boardservice.dto.UpdateBoardRequest;
 import com.boardservice.entity.Board;
 import com.boardservice.repository.BoardRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +16,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final UserServiceClient userServiceClient;
 
     /**
      * 게시글 생성
@@ -30,7 +34,9 @@ public class BoardService {
                 .build();
 
         Board savedBoard = boardRepository.save(board);
-        return BoardResponse.from(savedBoard);
+        String username = getUsername(userId);
+        
+        return BoardResponse.from(savedBoard, username);
     }
 
     /**
@@ -39,7 +45,10 @@ public class BoardService {
     @Transactional(readOnly = true)
     public List<BoardResponse> getAllBoards() {
         return boardRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(BoardResponse::from)
+                .map(board -> {
+                    String username = getUsername(board.getUserId());
+                    return BoardResponse.from(board, username);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -50,7 +59,9 @@ public class BoardService {
     public BoardResponse getBoard(Long boardId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + boardId));
-        return BoardResponse.from(board);
+        
+        String username = getUsername(board.getUserId());
+        return BoardResponse.from(board, username);
     }
 
     /**
@@ -66,7 +77,9 @@ public class BoardService {
         }
 
         board.update(request.getTitle(), request.getContent());
-        return BoardResponse.from(board);
+        String username = getUsername(userId);
+        
+        return BoardResponse.from(board, username);
     }
 
     /**
@@ -82,5 +95,17 @@ public class BoardService {
         }
 
         boardRepository.delete(board);
+    }
+
+    /**
+     * User Service로부터 username 조회 (Feign Client)
+     */
+    private String getUsername(Long userId) {
+        try {
+            return userServiceClient.getUser(userId).getData().getUsername();
+        } catch (Exception e) {
+            log.error("Failed to fetch username for userId: {}", userId, e);
+            return "Unknown"; // 통신 실패 시 기본값
+        }
     }
 }
