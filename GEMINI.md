@@ -5,14 +5,14 @@ This file serves as a context guide for Gemini agents working on this project. I
 ## 1. Project Overview
 
 **Project Name:** MSA Practice
-**Description:** A multi-module Spring Boot Microservices Architecture (MSA) practice project implementing a User Service and a Board Service with a shared Common module.
+**Description:** A multi-module Spring Boot Microservices Architecture (MSA) practice project implementing a User Service and a Board Service with a shared Common module and infrastructure services.
 **Key Technologies:**
 -   **Java:** 17
 -   **Framework:** Spring Boot 4.0.0 (Spring Data JPA, Spring WebMVC)
+-   **Infrastructure:** Spring Cloud (Netflix Eureka, OpenFeign, Gateway)
 -   **Build Tool:** Gradle
 -   **Database:** MySQL 8.0 (via Docker Compose)
--   **Authentication:** JWT (jjwt 0.11.5)
--   **Utilities:** Lombok
+-   **Containerization:** Docker & Docker Compose
 
 ## 2. Architecture & Modules
 
@@ -20,64 +20,79 @@ The project is structured as a Gradle multi-module project:
 
 ```
 msa-practice/ (Root)
-├── common/          # Shared library (DTOs, Utils, Security, Entities) - Not executable
-├── user-service/    # User management microservice (Port: 8080 default)
-├── board-service/   # Board/content management microservice (Port: 8081 default)
-├── build.gradle     # Root build configuration
-└── docker-compose.yml # Infrastructure setup (MySQL databases)
+├── common/             # Shared library (DTOs, Utils, Security, Entities)
+├── discovery-service/  # Service Discovery (Eureka Server) [Port: 8761]
+├── gateway-service/    # API Gateway (Auth, Logging, Routing) [Port: 8000]
+├── user-service/       # User management microservice [Port: 8080]
+├── board-service/      # Board/content management microservice [Port: 8081]
+├── build.gradle        # Root build configuration
+└── docker-compose.yml  # Infrastructure & Service orchestration
 ```
 
 ### Module Details
--   **common**: Contains shared components to ensure consistency across microservices.
+-   **common**: Shared components used across all microservices.
     -   `com.common.dto.ApiResponse`: Standardized API response format.
-    -   `com.common.entity.BaseTimeEntity`: Base class for entities to automatically handle `createdAt` and `updatedAt`.
-    -   `com.common.util.JwtUtil`: JWT token generation and validation.
-    -   `com.common.exception.BaseExceptionHandler`: Shared logic for handling common exceptions (Validation, Internal Server Error).
--   **user-service**: Handles user registration, login, and profile management. Dependent on `common`.
--   **board-service**: Handles board posts CRUD operations. Dependent on `common`.
+    -   `com.common.security.JwtAuthenticationFilter`: Shared JWT validation filter.
+-   **discovery-service**: Eureka Server for service registration and discovery.
+-   **gateway-service**: The entry point for all requests. Handles JWT validation (AuthorizationHeaderFilter), global logging, and routing via `lb://`.
+-   **user-service**: Handles authentication, registration, and user profiles.
+-   **board-service**: Handles board CRUD. Communicates with `user-service` via OpenFeign.
 
 ## 3. Development Standards
 
-### API Standards
--   All controller methods must return `ResponseEntity<ApiResponse<T>>`.
--   Use `ApiResponse.success(data)` for successful responses.
--   Use `ApiResponse.error(message)` for error responses (handled via `GlobalExceptionHandler`).
+### API & Security Standards
+-   **Entry Point**: All client requests should go through Gateway (`localhost:8000`).
+-   **Response Format**: All controllers must return `ResponseEntity<ApiResponse<T>>`.
+-   **Authentication**: Gateway validates JWT and forwards `X-User-Id` header to downstream services. Services can access this via `@AuthenticationPrincipal Long userId`.
 
-### Entity Standards
--   All JPA entities should extend `BaseTimeEntity` to maintain consistent audit logs.
--   Enable JPA Auditing in each service application class using `@EnableJpaAuditing`.
-
-### Git Branch Strategy
-*   **Main Branch**: `master` (Always deployable)
-*   **Feature Branches**: `feature/<scope>/<description>` (e.g., `feature/user-service/login`)
-*   **Bug Fixes**: `fix/<scope>/<description>`
-*   **Process**: Create branch -> Develop -> Pull Request -> Merge to `master`.
-
-### Commit Convention
-Format: `<type>(<scope>): <subject>`
-*   **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`.
-*   **Scopes**: `user-service`, `board-service`, `common`, `docker`, `gradle`.
-*   **Example**: `feat(user-service): Add login endpoint`
+### Entity & JPA Standards
+-   **Auditing**: Entities should extend `BaseTimeEntity` from the common module.
+-   **Configuration**: Enable `@EnableJpaAuditing` and `@EnableDiscoveryClient` in each service application class.
 
 ## 4. Getting Started
-...
-## 5. Implementation Status & Roadmap
 
-Refer to `REQUIREMENTS.md` for detailed functional requirements.
+### Prerequisites
+-   JDK 17
+-   Docker & Docker Compose
 
-### Phase 1: User Service & Infrastructure
--   [x] Project Structure Setup
--   [x] Database Infrastructure (MySQL Docker)
--   [x] Common Module Refactoring (ApiResponse, BaseTimeEntity)
--   [x] User Signup & Login (JWT)
--   [x] JWT Authentication Filter & Security Config
--   [ ] User Profile Management (My Info, Update)
+### Running with Docker (Recommended)
+You can launch the entire MSA environment with a single command:
+```bash
+docker-compose up -d --build
+```
+This starts:
+-   **Databases**: User DB (3306), Board DB (3307)
+-   **Infrastructure**: Eureka (8761), Gateway (8000)
+-   **Services**: User (8080), Board (8081)
 
-### Phase 2: Board Service
--   [ ] Database Configuration
--   [ ] Board CRUD
--   [ ] Auth Integration (using `common`)
+### Local Development (Manual)
+1.  Start MySQL containers: `docker-compose up -d user-mysql board-mysql`
+2.  Start `discovery-service` first.
+3.  Start other services in any order.
 
-### Phase 3: Integration
--   [ ] Service-to-Service Communication
--   [ ] API Gateway (Optional)
+## 5. Service Endpoints (via Gateway: 8000)
+
+| Feature | Method | Endpoint | Note |
+| :--- | :--- | :--- | :--- |
+| **Signup** | POST | `/api/users/signup` | Public |
+| **Login** | POST | `/api/users/login` | Public |
+| **My Info** | GET | `/api/users/me` | Requires JWT |
+| **User Info**| GET | `/api/users/{id}` | Internal/Public (for Feign) |
+| **Board List**| GET | `/api/boards` | Requires JWT |
+| **Post Board**| POST | `/api/boards` | Requires JWT |
+| **Discovery** | UI | `http://localhost:8761` | Eureka Dashboard |
+
+## 6. Implementation Status
+
+### Phase 1 & 2: Core Infrastructure & Features (Completed)
+-   [x] Common Module (ApiResponse, BaseTimeEntity, Shared JWT Filter)
+-   [x] User Service (Auth, Profile, JWT 발급)
+-   [x] Board Service (CRUD, User 연동 via Feign)
+-   [x] API Gateway (Global Auth, Logging, lb:// Routing)
+-   [x] Service Discovery (Eureka Server/Client)
+-   [x] Dockerization (Full Stack Orchestration)
+
+### Phase 3: Advanced Patterns (Next Steps)
+-   [ ] Circuit Breaker (Resilience4j)
+-   [ ] Distributed Tracing (Zipkin/Sleuth)
+-   [ ] Centralized Configuration (Spring Cloud Config)
