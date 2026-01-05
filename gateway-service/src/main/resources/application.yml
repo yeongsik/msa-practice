@@ -16,14 +16,14 @@ spring:
       routes:
         # User Service Route (인증 불필요: 회원가입, 로그인)
         - id: user-service-public
-          uri: http://localhost:8080
+          uri: lb://USER-SERVICE
           predicates:
             - Path=/api/users/signup, /api/users/login
             - Method=POST
 
         # User Service Route (인증 필요: 나머지)
         - id: user-service-auth
-          uri: http://localhost:8080
+          uri: lb://USER-SERVICE
           predicates:
             - Path=/api/users/**
           filters:
@@ -31,7 +31,7 @@ spring:
 
         # Board Service Route (인증 필요)
         - id: board-service
-          uri: http://localhost:8081
+          uri: lb://BOARD-SERVICE
           predicates:
             - Path=/api/boards/**
           filters:
@@ -43,3 +43,10 @@ logging:
     org.springframework.http.server.reactive: DEBUG
     org.springframework.web.reactive: DEBUG
     reactor.netty: DEBUG
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

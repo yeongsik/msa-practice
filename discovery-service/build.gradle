@@ -6,7 +6,7 @@ plugins {
 
 group = 'com'
 version = '0.0.1-SNAPSHOT'
-description = 'gateway-service'
+description = 'discovery-service'
 
 java {
     toolchain {
@@ -23,16 +23,8 @@ ext {
 }
 
 dependencies {
-    // Spring Cloud Gateway (MVC version or Reactive? Prefer Reactive for Gateway)
-    implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
     
-    // Common 모듈 (JWT 유틸리티)
-    implementation project(':common')
-
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
