@@ -1,0 +1,172 @@
+# ===================================
+# MSA 멀티 모듈 CI 워크플로우
+# ===================================
+# 각 서비스(모듈)를 독립적으로 빌드 및 테스트
+# 변경된 모듈만 빌드하여 시간 절약
+
+name: Multi-Module CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  # 변경된 파일 감지
+  detect-changes:
+    name: Detect Changed Modules
+    runs-on: ubuntu-latest
+    outputs:
+      common: ${{ steps.changes.outputs.common }}
+      user-service: ${{ steps.changes.outputs.user-service }}
+      board-service: ${{ steps.changes.outputs.board-service }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 가져오기 (변경 감지용)
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            common:
+              - 'common/**'
+            user-service:
+              - 'user-service/**'
+              - 'common/**'
+            board-service:
+              - 'board-service/**'
+              - 'common/**'
+
+  # Common 모듈 빌드
+  build-common:
+    name: Build Common Module
+    needs: detect-changes
+    if: needs.detect-changes.outputs.common == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build Common module
+        run: ./gradlew :common:build --no-daemon
+
+      - name: Test Common module
+        run: ./gradlew :common:test --no-daemon
+
+  # User Service 빌드
+  build-user-service:
+    name: Build User Service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.user-service == 'true'
+    runs-on: ubuntu-latest
+
+    # 서비스별 MySQL 컨테이너 실행 (통합 테스트용)
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: userdb_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Wait for MySQL
+        run: |
+          until docker exec $(docker ps -qf "ancestor=mysql:8.0") mysqladmin ping -h localhost -ptest --silent; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Build User Service
+        run: ./gradlew :user-service:build --no-daemon
+
+      - name: Test User Service
+        run: ./gradlew :user-service:test --no-daemon
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/userdb_test
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: test
+
+  # Board Service 빌드
+  build-board-service:
+    name: Build Board Service
+    needs: detect-changes
+    if: needs.detect-changes.outputs.board-service == 'true'
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: boarddb_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build Board Service
+        run: ./gradlew :board-service:build --no-daemon
+
+      - name: Test Board Service
+        run: ./gradlew :board-service:test --no-daemon
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/boarddb_test
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: test
