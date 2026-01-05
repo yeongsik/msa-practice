@@ -30,15 +30,14 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
-    // Security (비밀번호 암호화용 BCrypt)
-    implementation 'org.springframework.security:spring-security-crypto'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // Common 모듈 (JWT 유틸리티)
     implementation project(':common')
 
     // Database
     runtimeOnly 'com.mysql:mysql-connector-j'
+    testRuntimeOnly 'com.h2database:h2'  // 테스트용 인메모리 DB
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'

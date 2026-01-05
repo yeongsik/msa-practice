@@ -1,10 +1,13 @@
 package com.userservice.service;
 
+import com.userservice.dto.LoginRequest;
+import com.userservice.dto.LoginResponse;
 import com.userservice.dto.SignUpRequest;
 import com.userservice.dto.UserResponse;
 import com.userservice.entity.User;
 import com.userservice.exception.DuplicateEmailException;
 import com.userservice.exception.DuplicateUsernameException;
+import com.userservice.exception.InvalidCredentialsException;
 import com.userservice.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,6 +44,7 @@ class UserServiceTest {
     private UserService userService;
 
     private SignUpRequest signUpRequest;
+    private LoginRequest loginRequest;
     private User user;
 
     @BeforeEach
@@ -47,6 +53,11 @@ class UserServiceTest {
                 .username("testuser")
                 .password("password123")
                 .email("test@example.com")
+                .build();
+
+        loginRequest = LoginRequest.builder()
+                .username("testuser")
+                .password("password123")
                 .build();
 
         user = User.builder()
@@ -112,6 +123,54 @@ class UserServiceTest {
         verify(userRepository).existsByUsername("testuser");
         verify(userRepository).existsByEmail("test@example.com");
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("로그인 성공")
+    void login_Success() {
+        // given
+        given(userRepository.findByUsername(anyString())).willReturn(Optional.of(user));
+        given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
+
+        // when
+        LoginResponse response = userService.login(loginRequest);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isNotNull();
+        assertThat(response.getTokenType()).isEqualTo("Bearer");
+
+        verify(userRepository).findByUsername("testuser");
+        verify(passwordEncoder).matches("password123", "encodedPassword");
+    }
+
+    @Test
+    @DisplayName("로그인 실패 - 존재하지 않는 사용자")
+    void login_Fail_UserNotFound() {
+        // given
+        given(userRepository.findByUsername(anyString())).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.login(loginRequest))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verify(userRepository).findByUsername("testuser");
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("로그인 실패 - 비밀번호 불일치")
+    void login_Fail_PasswordMismatch() {
+        // given
+        given(userRepository.findByUsername(anyString())).willReturn(Optional.of(user));
+        given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> userService.login(loginRequest))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verify(userRepository).findByUsername("testuser");
+        verify(passwordEncoder).matches("password123", "encodedPassword");
     }
 
     @Test
