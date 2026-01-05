@@ -97,6 +97,88 @@ services:
     networks:
       - msa-network
 
+  # ============================================
+  # Discovery Service (Eureka Server)
+  # ============================================
+  discovery-service:
+    build:
+      context: .
+      dockerfile: discovery-service/Dockerfile
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - msa-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Gateway Service
+  # ============================================
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8000:8000"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - msa-network
+
+  # ============================================
+  # User Service
+  # ============================================
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://user-mysql:3306/userdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${USER_MYSQL_ROOT_PASSWORD}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      user-mysql:
+        condition: service_healthy
+    networks:
+      - msa-network
+
+  # ============================================
+  # Board Service
+  # ============================================
+  board-service:
+    build:
+      context: .
+      dockerfile: board-service/Dockerfile
+    container_name: board-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://board-mysql:3306/boarddb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${BOARD_MYSQL_ROOT_PASSWORD}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      board-mysql:
+        condition: service_healthy
+    networks:
+      - msa-network
+
 # ============================================
 # 볼륨 정의: 데이터 영속성 보장
 # ============================================
