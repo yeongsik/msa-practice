@@ -1,14 +1,13 @@
 package com.common.dto;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 /**
- * 서비스 간 공유되는 사용자 정보 DTO
+ * 서비스 간 공유되는 사용자 정보 DTO.
  */
 @Getter
 @NoArgsConstructor
