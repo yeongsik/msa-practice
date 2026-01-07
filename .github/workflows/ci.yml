@@ -53,8 +53,9 @@ jobs:
 
       # Step 4: Gradle 빌드 (컴파일)
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build -x test --no-daemon
         # --no-daemon: CI 환경에서는 Gradle 데몬 사용 안 함
+        # -x test: 테스트는 별도 단계에서 실행하므로 빌드에서는 제외
 
       # Step 5: 테스트 실행
       - name: Run tests
