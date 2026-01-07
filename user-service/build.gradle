@@ -42,6 +42,9 @@ dependencies {
     // Spring Cloud Config Client
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     // Common 모듈 (JWT 유틸리티)
     implementation project(':common')
 

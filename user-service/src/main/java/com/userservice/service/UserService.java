@@ -1,7 +1,9 @@
 package com.userservice.service;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StringRedisTemplate redisTemplate;
 
     /**
      * 사용자 정보 수정.
@@ -190,11 +193,20 @@ public class UserService {
     /**
      * 로그아웃.
      *
-     * @param userId 사용자 ID
+     * @param userId      사용자 ID
+     * @param accessToken Access Token
      */
     @Transactional
-    public void logout(Long userId) {
+    public void logout(Long userId, String accessToken) {
+        // 1. Refresh Token 삭제
         refreshTokenRepository.deleteByUserId(userId);
+
+        // 2. Access Token 블랙리스트 추가 (남은 유효시간만큼)
+        Long expiration = JwtUtil.getExpiration(accessToken);
+        if (expiration > 0) {
+            redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+        }
+
         log.info("로그아웃 성공: userId={}", userId);
     }
 
@@ -206,8 +218,15 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public com.common.dto.UserDto validateToken(String token) {
+        // 1. 기본 서명 검증
         if (!JwtUtil.validate(token)) {
             throw new InvalidCredentialsException("유효하지 않은 토큰입니다.");
+        }
+        
+        // 2. 블랙리스트 확인
+        String blacklisted = redisTemplate.opsForValue().get(token);
+        if (StringUtils.hasText(blacklisted)) {
+             throw new InvalidCredentialsException("로그아웃된 토큰입니다.");
         }
 
         Long userId = JwtUtil.getUserId(token);
@@ -218,7 +237,7 @@ public class UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .role(user.getRole().name()) // 실제 DB의 Role 사용
+                .role(user.getRole().name())
                 .build();
     }
 

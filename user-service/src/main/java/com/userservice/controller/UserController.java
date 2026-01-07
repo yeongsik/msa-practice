@@ -153,15 +153,20 @@ public class UserController {
 
     /**
      * 로그아웃 API.
-     * DB에서 Refresh Token을 삭제합니다.
+     * DB에서 Refresh Token을 삭제하고 Access Token을 블랙리스트에 추가합니다.
      *
-     * @param userId 인증된 사용자 ID
+     * @param userId     인증된 사용자 ID
+     * @param authHeader Authorization 헤더
      * @return ApiResponse{@code <Void>}
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal Long userId) {
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal Long userId,
+            @RequestHeader("Authorization") String authHeader
+    ) {
         log.info("POST /api/users/logout - 로그아웃 요청: userId={}", userId);
-        userService.logout(userId);
+        String accessToken = authHeader.substring(7);
+        userService.logout(userId, accessToken);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

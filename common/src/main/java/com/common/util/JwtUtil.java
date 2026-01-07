@@ -79,6 +79,27 @@ public class JwtUtil {
     }
 
     /**
+     * 토큰 남은 유효시간 조회.
+     *
+     * @param token JWT 토큰
+     * @return 남은 시간 (ms)
+     */
+    public static Long getExpiration(String token) {
+        try {
+            Date expiration = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getExpiration();
+            long now = new Date().getTime();
+            return (expiration.getTime() - now);
+        } catch (Exception e) {
+            return 0L;
+        }
+    }
+
+    /**
      * 토큰 유효성 검증.
      *
      * @param token JWT 토큰
