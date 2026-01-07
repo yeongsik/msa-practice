@@ -112,5 +112,22 @@ public class UserController {
 
         UpdateUserResponse response = userService.updateUser(id, request);
         return ResponseEntity.ok(ApiResponse.success(response));
+    /**
+     * 토큰 검증 API (다른 서비스 호출용)
+     *
+     * @param authHeader Authorization 헤더
+     * @return UserDto (검증된 사용자 정보)
+     */
+    @GetMapping("/validate")
+    public ResponseEntity<ApiResponse<com.common.dto.UserDto>> validateToken(
+            @org.springframework.web.bind.annotation.RequestHeader("Authorization") String authHeader
+    ) {
+        log.info("GET /api/users/validate - 토큰 검증 요청");
+        String token = authHeader;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+        com.common.dto.UserDto response = userService.validateToken(token);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

@@ -128,6 +128,30 @@ public class UserService {
     }
 
     /**
+     * 토큰 검증 및 사용자 정보 반환
+     *
+     * @param token JWT 토큰 (Bearer 제외)
+     * @return UserDto
+     */
+    @Transactional(readOnly = true)
+    public com.common.dto.UserDto validateToken(String token) {
+        if (!JwtUtil.validate(token)) {
+            throw new InvalidCredentialsException("유효하지 않은 토큰입니다.");
+        }
+
+        Long userId = JwtUtil.getUserId(token);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        return com.common.dto.UserDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role("USER") // 추후 Role 필드 추가 시 변경
+                .build();
+    }
+
+    /**
      * 회원가입
      *
      * @param request 회원가입 요청
