@@ -252,7 +252,7 @@ class BoardServiceTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getAuthorName()).isEqualTo("Unknown");
+        assertThat(response.getUsername()).isEqualTo("Unknown");
 
         verify(userServiceClient).getUser(1L);
     }
