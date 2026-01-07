@@ -1,26 +1,32 @@
 package com.gateway.filter;
 
-import com.common.util.JwtUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+
+import com.common.util.JwtUtil;
+
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 /**
- * JWT 인증 필터 (Gateway용)
+ * JWT 인증 필터 (Gateway용).
  */
 @Component
 @Slf4j
 public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
 
-    public AuthorizationHeaderFilter() {
+    private final ReactiveStringRedisTemplate redisTemplate;
+
+    public AuthorizationHeaderFilter(ReactiveStringRedisTemplate redisTemplate) {
         super(Config.class);
+        this.redisTemplate = redisTemplate;
     }
 
     public static class Config {
@@ -41,19 +47,26 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
             // 2. Bearer 토큰 추출
             String jwt = authorizationHeader.replace("Bearer", "").trim();
 
-            // 3. 토큰 검증
-            if (!JwtUtil.validate(jwt)) {
-                return onError(exchange, "JWT token is not valid", HttpStatus.UNAUTHORIZED);
-            }
+            // 3. Redis 블랙리스트 확인
+            return redisTemplate.hasKey(jwt)
+                    .flatMap(isBlacklisted -> {
+                        if (isBlacklisted) {
+                            return onError(exchange, "Token is blacklisted (Logout)", HttpStatus.UNAUTHORIZED);
+                        }
 
-            // 4. (선택사항) 하위 서비스에 userId 전달
-            // 헤더에 X-User-Id를 추가해서 보내면, 하위 서비스는 토큰 파싱 없이 이 헤더만 믿고 쓸 수 있음
-            Long userId = JwtUtil.getUserId(jwt);
-            ServerHttpRequest modifiedRequest = request.mutate()
-                    .header("X-User-Id", String.valueOf(userId))
-                    .build();
+                        // 4. 토큰 유효성 검증
+                        if (!JwtUtil.validate(jwt)) {
+                            return onError(exchange, "JWT token is not valid", HttpStatus.UNAUTHORIZED);
+                        }
 
-            return chain.filter(exchange.mutate().request(modifiedRequest).build());
+                        // 5. 하위 서비스에 userId 전달
+                        Long userId = JwtUtil.getUserId(jwt);
+                        ServerHttpRequest modifiedRequest = request.mutate()
+                                .header("X-User-Id", String.valueOf(userId))
+                                .build();
+
+                        return chain.filter(exchange.mutate().request(modifiedRequest).build());
+                    });
         };
     }
 

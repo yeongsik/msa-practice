@@ -45,3 +45,4 @@ out/
 .env.production
 
 # .env.example은 제외 (템플릿이므로 커밋함)
+\n### Config Repository ###\nconfig-repo/

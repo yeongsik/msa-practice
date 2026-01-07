@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 게시글 생성 요청 DTO
+ * 게시글 생성 요청 DTO.
  */
 @Getter
 @NoArgsConstructor

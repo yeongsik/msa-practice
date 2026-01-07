@@ -1,0 +1,20 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-service
+  profiles:
+    active: native # 로컬 파일 시스템 사용
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: file:./config-repo # 루트 디렉토리의 config-repo 폴더 참조
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

@@ -25,6 +25,11 @@ spring:
       org.hibernate.type.descriptor.sql.BasicBinder: TRACE
       com.boardservice: DEBUG
 
+  # Eureka 비활성화
+  cloud:
+    discovery:
+      enabled: false
+
 # Feign Client 비활성화 (테스트에서는 Mock 사용)
 feign:
   client:
@@ -32,3 +37,7 @@ feign:
       default:
         connectTimeout: 5000
         readTimeout: 5000
+
+eureka:
+  client:
+    enabled: false
