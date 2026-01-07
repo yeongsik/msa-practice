@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.common.type.UserRole;
 import com.common.util.JwtUtil;
 import com.userservice.dto.LoginRequest;
 import com.userservice.dto.LoginResponse;
@@ -217,7 +218,7 @@ public class UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .role("USER") // 추후 Role 필드 추가 시 변경
+                .role(user.getRole().name()) // 실제 DB의 Role 사용
                 .build();
     }
 
@@ -253,6 +254,7 @@ public class UserService {
                 .username(request.getUsername())
                 .password(encodedPassword)
                 .email(request.getEmail())
+                .role(UserRole.USER) // 기본 권한: USER
                 .build();
 
         // 저장
