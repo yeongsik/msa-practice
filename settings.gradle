@@ -4,4 +4,5 @@ include 'board-service'
 include 'common'
 include 'gateway-service'
 include 'discovery-service'
+include 'config-service'
 

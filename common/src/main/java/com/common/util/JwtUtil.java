@@ -6,16 +6,32 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * JWT 유틸리티 클래스.
  */
+@Slf4j
 public class JwtUtil {
 
-    private static final String SECRET = "my-secret-key-must-be-at-least-256-bits-long";
-    private static final long ACCESS_TOKEN_EXPIRATION = 3600000; // 1시간
-    private static final long REFRESH_TOKEN_EXPIRATION = 604800000; // 7일
-    private static final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    private static Key key;
+    private static long accessTokenExpiration;
+    private static long refreshTokenExpiration;
+
+    /**
+     * JWT 설정을 초기화합니다.
+     * 외부(Config Server 등)에서 주입받은 값으로 설정합니다.
+     *
+     * @param secret 시크릿 키
+     * @param accessExp Access Token 만료 시간
+     * @param refreshExp Refresh Token 만료 시간
+     */
+    public static void init(String secret, long accessExp, long refreshExp) {
+        key = Keys.hmacShaKeyFor(secret.getBytes());
+        accessTokenExpiration = accessExp;
+        refreshTokenExpiration = refreshExp;
+        log.info("JwtUtil initialized with secret key and expirations.");
+    }
 
     /**
      * Access Token 생성.
@@ -27,7 +43,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -42,7 +58,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
