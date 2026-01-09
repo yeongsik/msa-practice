@@ -45,6 +45,10 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // Distributed Tracing (Micrometer + Zipkin)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
     // Common 모듈 (JWT 유틸리티)
     implementation project(':common')
 

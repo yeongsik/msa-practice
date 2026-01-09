@@ -37,8 +37,16 @@ dependencies {
     // OpenFeign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     
+    // Circuit Breaker (Resilience4j)
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+    implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+    
     // Spring Cloud Eureka Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // Distributed Tracing (Micrometer + Zipkin)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     // Common 모듈
     implementation project(':common')
