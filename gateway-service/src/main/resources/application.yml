@@ -7,6 +7,19 @@ spring:
 
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"    # 모든 Origin 허용 (운영 시 특정 도메인으로 제한 필요)
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
       default-filters:
         - name: LoggingFilter
           args:
@@ -28,6 +41,12 @@ spring:
             - Path=/api/users/**
           filters:
             - AuthorizationHeaderFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10   # 초당 처리량 (토큰 생성 속도)
+                redis-rate-limiter.burstCapacity: 20   # 최대 버스트 용량 (순간 트래픽 허용량)
+                redis-rate-limiter.requestedTokens: 1  # 요청당 소모 토큰 수
+                key-resolver: "#{@userKeyResolver}"    # Bean 이름 참조
 
         # Board Service Route (인증 필요)
         - id: board-service
@@ -36,6 +55,12 @@ spring:
             - Path=/api/boards/**
           filters:
             - AuthorizationHeaderFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@userKeyResolver}"
 
 logging:
   level:
