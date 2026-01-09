@@ -26,6 +26,11 @@ dependencies {
     // Spring Cloud Gateway (MVC version or Reactive? Prefer Reactive for Gateway)
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
+    // Distributed Tracing (Micrometer + Zipkin)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
     
     // Spring Cloud Config Client
     implementation 'org.springframework.cloud:spring-cloud-starter-config'

@@ -44,6 +44,10 @@ dependencies {
     // Spring Cloud Eureka Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
+    // Distributed Tracing (Micrometer + Zipkin)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
     // Common 모듈
     implementation project(':common')
 

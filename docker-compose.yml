@@ -135,6 +135,17 @@ services:
       retries: 3
 
   # ============================================
+  # Zipkin (Distributed Tracing)
+  # ============================================
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - msa-network
+
+  # ============================================
   # Gateway Service
   # ============================================
   gateway-service:
