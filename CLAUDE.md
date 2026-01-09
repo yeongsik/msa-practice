@@ -57,3 +57,13 @@ msa-practice/
 - `com.userservice` - User service application
 - `com.boardservice` - Board service application
 - `com.common.util` - Shared utilities (JwtUtil)
+
+## Code Style
+
+This project enforces **Google Java Style** via Checkstyle. See `config/checkstyle/checkstyle.xml` for detailed rules.
+
+Key points:
+- Import order: `java.*` / `javax.*` first, then third-party packages (lombok, spring, etc.)
+- Line length: max 120 characters
+- Javadoc required on public methods, must end with period (`.`)
+- Run checkstyle: `./gradlew checkstyleMain` or `./gradlew build`
