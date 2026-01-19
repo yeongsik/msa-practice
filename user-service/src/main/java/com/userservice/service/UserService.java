@@ -1,8 +1,10 @@
 package com.userservice.service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +45,11 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
+
+    @Value("${token.refresh-expiration}")
+    private long refreshExpirationMs;
+
+    private static final String LOGOUT_VALUE = "logout";
 
     /**
      * 사용자 정보 수정.
@@ -142,7 +149,7 @@ public class UserService {
         RefreshToken refreshTokenEntity = RefreshToken.builder()
                 .userId(user.getId())
                 .token(refreshToken)
-                .expiryDate(LocalDateTime.now().plusDays(7)) // 7일
+                .expiryDate(LocalDateTime.now().plus(Duration.ofMillis(refreshExpirationMs)))
                 .build();
 
         refreshTokenRepository.save(refreshTokenEntity);
@@ -204,7 +211,7 @@ public class UserService {
         // 2. Access Token 블랙리스트 추가 (남은 유효시간만큼)
         Long expiration = JwtUtil.getExpiration(accessToken);
         if (expiration > 0) {
-            redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+            redisTemplate.opsForValue().set(accessToken, LOGOUT_VALUE, expiration, TimeUnit.MILLISECONDS);
         }
 
         log.info("로그아웃 성공: userId={}", userId);

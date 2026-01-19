@@ -11,7 +11,20 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@RedisHash(value = "refreshToken", timeToLive = 604800) // 7일
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.TimeToLive;
+import org.springframework.data.redis.core.index.Indexed;
+
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@RedisHash(value = "refreshToken")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
@@ -26,6 +39,11 @@ public class RefreshToken {
     private Long userId;
 
     private LocalDateTime expiryDate;
+
+    @TimeToLive
+    public long getTimeToLive() {
+        return Duration.between(LocalDateTime.now(), expiryDate).getSeconds();
+    }
 
     @Builder
     public RefreshToken(String token, Long userId, LocalDateTime expiryDate) {
