@@ -19,17 +19,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.userservice.config.TestConfig;
 
 /**
- * UserController 통합 테스트
+ * UserController 통합 테스트.
  * MockMvc 사용
  *
  * 참고: 상세한 비즈니스 로직 테스트는 UserServiceTest에서 수행
  */
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestConfig.class)
 class UserControllerTest {
 
     private MockMvc mockMvc;
@@ -158,7 +162,7 @@ class UserControllerTest {
                         .content(loginRequest))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.data.tokenType").value("Bearer"));
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
     }
 
     @Test

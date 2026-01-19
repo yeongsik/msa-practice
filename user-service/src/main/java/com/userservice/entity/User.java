@@ -63,6 +63,18 @@ public class User extends BaseTimeEntity {
     private UserRole role;
 
     /**
+     * 프로필 이미지 URL (원본/최적화 버전).
+     */
+    @Column(length = 255)
+    private String profileImageUrl;
+
+    /**
+     * 썸네일 이미지 URL.
+     */
+    @Column(length = 255)
+    private String thumbnailUrl;
+
+    /**
      * 비밀번호 업데이트 (비즈니스 로직).
      *
      * @param newPassword 새로운 비밀번호
@@ -78,5 +90,16 @@ public class User extends BaseTimeEntity {
      */
     public void updateEmail(String newEmail) {
         this.email = newEmail;
+    }
+
+    /**
+     * 프로필 이미지 업데이트 (비즈니스 로직).
+     *
+     * @param profileImageUrl 프로필 이미지 URL
+     * @param thumbnailUrl    썸네일 이미지 URL
+     */
+    public void updateProfileImage(String profileImageUrl, String thumbnailUrl) {
+        this.profileImageUrl = profileImageUrl;
+        this.thumbnailUrl = thumbnailUrl;
     }
 }

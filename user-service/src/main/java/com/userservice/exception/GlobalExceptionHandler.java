@@ -46,4 +46,15 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
     ) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(ex.getMessage()));
     }
+
+    /**
+     * 이미지 업로드 예외 처리 (400 Bad Request)
+     */
+    @ExceptionHandler(ImageUploadException.class)
+    public ResponseEntity<ApiResponse<Void>> handleImageUploadException(
+            ImageUploadException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
 }

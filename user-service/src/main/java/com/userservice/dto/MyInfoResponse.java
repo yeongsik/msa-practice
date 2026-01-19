@@ -21,6 +21,8 @@ public class MyInfoResponse {
     private Long id;
     private String username;
     private String email;
+    private String profileImageUrl;
+    private String thumbnailUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -29,6 +31,8 @@ public class MyInfoResponse {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .profileImageUrl(user.getProfileImageUrl())
+                .thumbnailUrl(user.getThumbnailUrl())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

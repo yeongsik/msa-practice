@@ -3,8 +3,12 @@ spring:
   config:
     activate:
       on-profile: test  # test 프로파일만 활성화
+    import: "optional:configserver:"
   application:
     name: user-service-test
+  cloud:
+    config:
+      enabled: false
 
   # H2 In-Memory Database for Testing
   datasource:
@@ -22,6 +26,21 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+
+  # Redis Configuration for Testing (embedded or mock)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# JWT Token Configuration for Testing
+jwt:
+  secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits-long
+  access-expiration: 3600000
+  refresh-expiration: 604800000
+
+token:
+  refresh-expiration: 604800000
 
 # Server Configuration for Testing
 server:

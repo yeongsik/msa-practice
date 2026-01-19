@@ -1,5 +1,8 @@
 package com.userservice.service;
 
+import java.util.Optional;
+
+import com.common.util.JwtUtil;
 import com.userservice.dto.LoginRequest;
 import com.userservice.dto.LoginResponse;
 import com.userservice.dto.MyInfoResponse;
@@ -7,33 +10,39 @@ import com.userservice.dto.SignUpRequest;
 import com.userservice.dto.UpdateUserRequest;
 import com.userservice.dto.UpdateUserResponse;
 import com.userservice.dto.UserResponse;
+import com.userservice.entity.RefreshToken;
 import com.userservice.entity.User;
 import com.userservice.exception.DuplicateEmailException;
 import com.userservice.exception.DuplicateUsernameException;
 import com.userservice.exception.InvalidCredentialsException;
+import com.userservice.repository.RefreshTokenRepository;
 import com.userservice.repository.UserRepository;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 /**
- * UserService 단위 테스트
+ * UserService 단위 테스트.
  */
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -42,10 +51,18 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private StringRedisTemplate redisTemplate;
 
     @InjectMocks
     private UserService userService;
+
+    private MockedStatic<JwtUtil> jwtUtilMock;
 
     private SignUpRequest signUpRequest;
     private LoginRequest loginRequest;
@@ -70,6 +87,13 @@ class UserServiceTest {
                 .password("encodedPassword")
                 .email("test@example.com")
                 .build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (jwtUtilMock != null) {
+            jwtUtilMock.close();
+        }
     }
 
     @Test
@@ -133,19 +157,26 @@ class UserServiceTest {
     @DisplayName("로그인 성공")
     void login_Success() {
         // given
+        jwtUtilMock = mockStatic(JwtUtil.class);
+        jwtUtilMock.when(() -> JwtUtil.generateAccessToken(anyLong())).thenReturn("access-token");
+        jwtUtilMock.when(() -> JwtUtil.generateRefreshToken(anyLong())).thenReturn("refresh-token");
+
         given(userRepository.findByUsername(anyString())).willReturn(Optional.of(user));
         given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
+        given(refreshTokenRepository.save(any(RefreshToken.class))).willReturn(null);
 
         // when
         LoginResponse response = userService.login(loginRequest);
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isNotNull();
-        assertThat(response.getTokenType()).isEqualTo("Bearer");
+        assertThat(response.getAccessToken()).isEqualTo("access-token");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
 
         verify(userRepository).findByUsername("testuser");
         verify(passwordEncoder).matches("password123", "encodedPassword");
+        verify(refreshTokenRepository).deleteByUserId(1L);
+        verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
     @Test

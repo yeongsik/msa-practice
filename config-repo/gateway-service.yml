@@ -1,0 +1,10 @@
+token:
+  secret: "my-secret-key-must-be-at-least-256-bits-long-and-secure"
+  access-expiration: 3600000  # 1시간
+  refresh-expiration: 604800000 # 7일
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379

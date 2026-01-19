@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/signup", "/api/users/login", "/api/users/reissue").permitAll() // 회원가입, 로그인, 토큰재발급 허용
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/{id}").permitAll() // 사용자 정보 조회 허용 (내부 통신용)
                         .requestMatchers("/actuator/**").permitAll() // 헬스체크 등
+                        .requestMatchers("/uploads/**").permitAll() // 정적 이미지 리소스 허용
                         .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
                 )
                 

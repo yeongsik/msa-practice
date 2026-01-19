@@ -52,3 +52,11 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+app:
+  upload:
+    base-path: uploads
+    max-file-size: 5242880 # 5MB
+    allowed-types: jpg,jpeg,png,webp
+    thumbnail-size: 200
+    profile-size: 800

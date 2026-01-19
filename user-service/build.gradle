@@ -49,6 +49,10 @@ dependencies {
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
+    // Image Processing & File Analysis
+    implementation 'net.coobird:thumbnailator:0.4.20'
+    implementation 'org.apache.tika:tika-core:2.9.1'
+
     // Common 모듈 (JWT 유틸리티)
     implementation project(':common')
 

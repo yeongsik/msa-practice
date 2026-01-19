@@ -34,6 +34,16 @@ public class UserResponse {
     private String email;
 
     /**
+     * 프로필 이미지 URL
+     */
+    private String profileImageUrl;
+
+    /**
+     * 썸네일 이미지 URL
+     */
+    private String thumbnailUrl;
+
+    /**
      * 생성일시
      */
     private LocalDateTime createdAt;
@@ -49,6 +59,8 @@ public class UserResponse {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .profileImageUrl(user.getProfileImageUrl())
+                .thumbnailUrl(user.getThumbnailUrl())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
