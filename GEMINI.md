@@ -49,6 +49,9 @@ msa-practice/ (Root)
 -   **Auditing**: Entities should extend `BaseTimeEntity` from the common module.
 -   **Configuration**: Enable `@EnableJpaAuditing` and `@EnableDiscoveryClient` in each service application class.
 
+### Code Style
+-   **Checkstyle**: Adhere to the project's coding standards defined in `config/checkstyle/checkstyle.xml`. Ensure your IDE is configured to use this file.
+
 ## 4. Getting Started
 
 ### Prerequisites
