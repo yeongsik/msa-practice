@@ -47,6 +47,7 @@ msa-practice/ (Root)
 
 ### Entity & JPA Standards
 -   **Auditing**: Entities should extend `BaseTimeEntity` from the common module.
+-   **ID Generation**: Use Snowflake algorithm for distributed ID generation. (See `SnowflakeIdentifierGenerator` in common module)
 -   **Configuration**: Enable `@EnableJpaAuditing` and `@EnableDiscoveryClient` in each service application class.
 
 ### Code Style
@@ -65,13 +66,14 @@ docker-compose up -d --build
 ```
 This starts:
 -   **Databases**: User DB (3306), Board DB (3307)
--   **Infrastructure**: Eureka (8761), Gateway (8000)
+-   **Infrastructure**: Eureka (8761), Gateway (8000), Config Server (8888)
 -   **Services**: User (8080), Board (8081)
 
 ### Local Development (Manual)
 1.  Start MySQL containers: `docker-compose up -d user-mysql board-mysql`
 2.  Start `discovery-service` first.
-3.  Start other services in any order.
+3.  Start `config-service`.
+4.  Start other services in any order.
 
 ## 5. Service Endpoints (via Gateway: 8000)
 
@@ -81,9 +83,12 @@ This starts:
 | **Login** | POST | `/api/users/login` | Public |
 | **My Info** | GET | `/api/users/me` | Requires JWT |
 | **User Info**| GET | `/api/users/{id}` | Internal/Public (for Feign) |
+| **Upload Image**| POST | `/api/users/{id}/profile-image` | Multi-part, JWT Required |
+| **Delete Image**| DELETE | `/api/users/{id}/profile-image` | JWT Required |
 | **Board List**| GET | `/api/boards` | Requires JWT |
 | **Post Board**| POST | `/api/boards` | Requires JWT |
 | **Discovery** | UI | `http://localhost:8761` | Eureka Dashboard |
+| **Config** | UI | `http://localhost:8888/{service}/{profile}` | Config Server |
 
 ## 6. Implementation Status
 
@@ -95,7 +100,9 @@ This starts:
 -   [x] Service Discovery (Eureka Server/Client)
 -   [x] Dockerization (Full Stack Orchestration)
 
-### Phase 3: Advanced Patterns (Next Steps)
+### Phase 3: Advanced Patterns (Completed & Ongoing)
+-   [x] Distributed ID Generation (Snowflake Algorithm)
+-   [x] Centralized Configuration (Spring Cloud Config)
+-   [x] Profile Image Management (Thumbnailator, Apache Tika)
 -   [ ] Circuit Breaker (Resilience4j)
--   [ ] Distributed Tracing (Zipkin/Sleuth)
--   [ ] Centralized Configuration (Spring Cloud Config)
+-   [ ] Distributed Tracing (Zipkin/Sleuth) - Infrastructure ready, need instrumentation.
