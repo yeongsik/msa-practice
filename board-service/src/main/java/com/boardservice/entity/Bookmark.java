@@ -3,6 +3,7 @@ package com.boardservice.entity;
 import com.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  * 게시글 북마크(즐겨찾기) 엔티티
@@ -22,7 +23,8 @@ import lombok.*;
 public class Bookmark extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "snowflake-id")
+    @GenericGenerator(name = "snowflake-id", strategy = "com.common.util.id.SnowflakeIdentifierGenerator")
     private Long id;
 
     /**
