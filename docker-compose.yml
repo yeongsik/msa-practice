@@ -209,6 +209,29 @@ services:
     networks:
       - msa-network
 
+  # ============================================
+  # Image Service (Python)
+  # ============================================
+  image-service:
+    build:
+      context: image-service
+      dockerfile: Dockerfile
+    container_name: image-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_PORT=8082
+      - EUREKA_SERVER=http://discovery-service:8761/eureka/
+      - UPLOAD_DIR=/app/uploads
+      - APP_NAME=image-service
+    volumes:
+      - image-uploads:/app/uploads
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - msa-network
+
 # ============================================
 # 볼륨 정의: 데이터 영속성 보장
 # ============================================
@@ -225,6 +248,10 @@ volumes:
 
   # Redis 데이터 볼륨
   redis-data:
+    driver: local
+
+  # Image Service Uploads
+  image-uploads:
     driver: local
 
 # ============================================
